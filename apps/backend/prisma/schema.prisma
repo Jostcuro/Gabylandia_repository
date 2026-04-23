@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  CONFIRMED
+  PENDING
+  QUOTE
+  CANCELED
+}
+
+enum ChecklistCategory {
+  FIXED
+  PER_EVENT
+  FABRICATION
+  CONSUMABLE
+  ADDITIONAL
+}
+
+enum ChecklistStatus {
+  MISSING
+  IN_PROGRESS
+  READY
+}
+
+model Event {
+  id                Int             @id @default(autoincrement())
+  bookingDate       DateTime
+  eventDateTime     DateTime
+  address           String
+  status            EventStatus
+  contactName       String
+  contactPhone      String
+  honoreeName       String
+  honoreeAge        Int?
+  theme             String
+  setupDescription  String
+  imageUrls         Json
+  price             Decimal         @db.Decimal(10, 2)
+  advancePayment    Decimal         @db.Decimal(10, 2)
+  balanceDue        Decimal         @db.Decimal(10, 2)
+  logisticsNotes    String          @default("")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  checklistItems    ChecklistItem[]
+}
+
+model ChecklistItem {
+  id          Int               @id @default(autoincrement())
+  eventId     Int
+  label       String
+  category    ChecklistCategory
+  status      ChecklistStatus   @default(MISSING)
+  isChecked   Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  event       Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id          Int            @id @default(autoincrement())
+  name        String         @unique
+  description String?
+  createdAt   DateTime       @default(now())
+  items       TemplateItem[]
+}
+
+model TemplateItem {
+  id         Int               @id @default(autoincrement())
+  templateId Int
+  label      String
+  category   ChecklistCategory
+  template   Template          @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
